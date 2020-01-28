@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Best Practice SNS Topic
+Parameters:
+  ScaleUpKinesisModuleName:
+    Description: The name of the jar
+    Type: String
+    Default: com.aws.ScaleUpKinesisShards
+  ScaleUpKinesisS3Key:
+    Description: The name of the ZIP package
+    Type: String
+    Default: scale-kinesis-shards-1.0-SNAPSHOT.jar
+  S3Bucket:
+    Description: The name of the ZIP package
+    Type: String
+    Default: tayo-autoscale-kinesis
+  ScaleUpMultiplier:
+    Description: Scale Up Multiplier
+    Type: String
+    Default: 2
+
+  SubscriptionEndPoint:
+    Type: String
+    Description: >-
+      The endpoint that receives notifications from the Amazon SNS topic. The
+      endpoint value depends on the protocol that you specify. This could be a
+      URL or ARN
+  SubscriptionProtocol:
+    Type: String
+    Description: The subscription's protocol
+    AllowedValues:
+      - http
+      - https
+      - email
+      - lambda
+    Default: lambda
+Resources:
+  ScaleUpKinesisShards:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref ScaleUpKinesisS3Key
+      Handler: !Join
+      - ''
+      - - !Ref ScaleUpKinesisModuleName
+        - ::handleRequest
+      Role:
+        Fn::GetAtt:
+        - "LambdaExecutionRole"
+        - "Arn"
+      Runtime: java8
+      Timeout: '45'
+      Tags:
+      - Key: Name
+        Value: ScaleUpKinesisShard
+      Environment:
+        Variables:
+          scale_up_multiplier: !Ref ScaleUpMultiplier
+
+  SNSTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties: {}
+  SNSSubscription:
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      Endpoint:
+        Fn::GetAtt:
+        - "ScaleUpKinesisShards"
+        - "Arn"
+      Protocol: "lambda"
+      TopicArn: !Ref SNSTopic
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'Auto-Scale-Kinesis-Lambda-Execution-Role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/AmazonKinesisFullAccess'
+      - 'arn:aws:iam::aws:policy/CloudwatchFullAccess'
+      - 'arn:aws:iam::aws:policy/AmazonSNSFullAccess'

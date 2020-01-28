@@ -1,0 +1,4 @@
+com/aws/SendRecordsToKinesisStream.class
+com/aws/ScaleUpKinesisShards.class
+com/aws/ScaleDownKinesisShards.class
+com/aws/Helper.class
