@@ -86,7 +86,7 @@ public class Helper
      static List<Shard> getOpenShards(DescribeStreamRequest describeStreamRequestWithExclusiveShardStart,
                                       String exclusiveStartShardId, AmazonKinesis kinesis) {
         List<Shard> shards = new ArrayList<>();
-        do {
+        /*do {
             describeStreamRequestWithExclusiveShardStart.setExclusiveStartShardId(exclusiveStartShardId);
             DescribeStreamResult describeStreamResult = kinesis.describeStream(describeStreamRequestWithExclusiveShardStart);
             shards.addAll(describeStreamResult.getStreamDescription().getShards());
@@ -99,8 +99,9 @@ public class Helper
                 exclusiveStartShardId = null;
             }
 
-        }while (exclusiveStartShardId != null);
-
+        }while (exclusiveStartShardId != null);*/
+         DescribeStreamResult describeStreamResult = kinesis.describeStream(describeStreamRequestWithExclusiveShardStart);
+         shards.addAll(describeStreamResult.getStreamDescription().getShards());
         return shards;
     }
 
